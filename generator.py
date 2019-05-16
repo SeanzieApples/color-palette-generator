@@ -13,7 +13,7 @@ h = args.hex.lstrip('#')
 initial_color = tuple(int(h[i:i+2], 16)/255 for i in (0, 2, 4))
 initial_hsv = colorsys.rgb_to_hsv(
     initial_color[0], initial_color[1], initial_color[2])
-if(round(initial_hsv[0] * 360) < 80 or round(initial_hsv[1] * 100) < 55 or round(initial_hsv[2] * 100) < 55):
+if(round(initial_hsv[1] * 100) < 55 or round(initial_hsv[2] * 100) < 55 or round(initial_hsv[2] * 100) > 70):
     print("Must pick a mid range color")
     sys.exit(2)
 
