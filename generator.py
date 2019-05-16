@@ -27,18 +27,18 @@ def get_value_for_png(color):
 
 def add_to_value(float_value, number, scale):
     new_value = round((float_value * scale) + number)
-    if new_value < scale:
+    if new_value <= scale:
         return new_value/scale
     else:
-        return 1.0
+        return (new_value-scale)/scale
 
 
 def subtract_from_value(float_value, number, scale):
     new_value = round((float_value * scale) - number)
-    if new_value > 0:
+    if new_value >= 0:
         return new_value/scale
     else:
-        return 0.0
+        return (scale+new_value)/scale
 
 
 first_hue = subtract_from_value(initial_hsv[0], 80, 360)
@@ -49,6 +49,7 @@ first_color = ((first_hue, first_saturation, first_brightness))
 all_colors = []
 all_colors.append(first_color)
 
+# Generate first ramp
 for i in range(0, 8):
     last_hsb_values = all_colors[-1]
     hue = add_to_value(last_hsb_values[0], 20, 360)
@@ -69,21 +70,34 @@ for i in range(0, 8):
         brightness = add_to_value(last_hsb_values[2], 5, 100)
     all_colors.append((hue, saturation, brightness))
 
-# for i in all_colors:
-#     print("hue=", i[0] * 360)
-#     print("saturation=", i[1] * 100)
-#     print("brightness=", i[2] * 100)
+hue_shift = 180
+first_ramp = []
+for i in all_colors:
+    shifted_color = (subtract_from_value(i[0], hue_shift, 360), i[1], i[2])
+    first_ramp.append(shifted_color)
+
+all_ramps = []
+all_ramps.append(first_ramp)
+
+# Generate other ramps
+for i in range(0, 7):
+    new_ramp = []
+    for color in all_ramps[-1]:
+        new_ramp.append((add_to_value(
+            color[0], 45, 360), color[1], color[2]))
+    all_ramps.append(new_ramp)
 
 color_width = 250
 color_height = 250
 pixels = []
 
-for i in range(0, color_height):
-    pixels.append([])
-    for color in all_colors:
-        pixels[i].extend(get_value_for_png(color) * color_width)
+for j in all_ramps:
+    for i in range(0, color_height):
+        pixels.append([])
+        for color in j:
+            pixels[-1].extend(get_value_for_png(color) * color_width)
 
 png_writer = png.Writer(width=color_width * len(all_colors),
-                        height=color_height, alpha='RGBA')
+                        height=color_height * len(all_ramps), alpha='RGBA')
 with open(args.output, 'wb') as img:
     png_writer.write(img, pixels)
