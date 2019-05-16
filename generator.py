@@ -82,10 +82,19 @@ all_ramps.append(first_ramp)
 # Generate other ramps
 for i in range(0, 7):
     new_ramp = []
+    desaturated_ramp = []
     for color in all_ramps[-1]:
-        new_ramp.append((add_to_value(
-            color[0], 45, 360), color[1], color[2]))
+        new_color = (add_to_value(color[0], 45, 360), color[1], color[2])
+        new_ramp.append(new_color)
     all_ramps.append(new_ramp)
+
+for ramp in all_ramps:
+    desaturated_ramp = []
+    for color in ramp:
+        if ramp.index(color) > 0 and ramp.index(color) < 8:
+            desaturated_color = (color[0], (color[1]*70)/100, color[2])
+            desaturated_ramp.insert(0, desaturated_color)
+    ramp.extend(desaturated_ramp)
 
 color_width = 250
 color_height = 250
@@ -97,7 +106,7 @@ for j in all_ramps:
         for color in j:
             pixels[-1].extend(get_value_for_png(color) * color_width)
 
-png_writer = png.Writer(width=color_width * len(all_colors),
+png_writer = png.Writer(width=color_width * (len(all_colors) + (len(all_colors) - 2)),
                         height=color_height * len(all_ramps), alpha='RGBA')
 with open(args.output, 'wb') as img:
     png_writer.write(img, pixels)
