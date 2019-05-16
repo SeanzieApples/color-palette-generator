@@ -13,9 +13,6 @@ h = args.hex.lstrip('#')
 initial_color = tuple(int(h[i:i+2], 16)/255 for i in (0, 2, 4))
 initial_hsv = colorsys.rgb_to_hsv(
     initial_color[0], initial_color[1], initial_color[2])
-if(round(initial_hsv[1] * 100) < 55 or round(initial_hsv[2] * 100) < 55 or round(initial_hsv[2] * 100) > 70):
-    print("Must pick a mid range color")
-    sys.exit(2)
 
 
 def get_value_for_png(color):
@@ -30,6 +27,8 @@ def add_to_value(float_value, number, scale):
     if new_value <= scale:
         return new_value/scale
     else:
+        if(scale == 100):
+            return 1.0
         return (new_value-scale)/scale
 
 
@@ -38,6 +37,8 @@ def subtract_from_value(float_value, number, scale):
     if new_value >= 0:
         return new_value/scale
     else:
+        if(scale == 100):
+            return 0.0
         return (scale+new_value)/scale
 
 
