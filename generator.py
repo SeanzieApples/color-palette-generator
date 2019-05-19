@@ -59,7 +59,7 @@ all_colors.append(first_color)
 scaled_numbers = []
 
 for i in range(0, args.number-1):
-    scaled_num = round((i * 9)/args.number)
+    scaled_num = round((i * 8)/(args.number-1))
     scaled_numbers.append(scaled_num)
 
 # Generate first ramp
@@ -111,9 +111,11 @@ for i in range(0, ramp_num-1):
 
 for ramp in all_ramps:
     desaturated_ramp = []
-    for color in ramp:
-        if round((ramp.index(color)*9/args.number)) > 0 and round((ramp.index(color)*9)/args.number) < 8:
-            desaturated_color = (color[0], (color[1]*70)/100, color[2])
+    for i in range(0, len(ramp)):
+        color = ramp[i]
+        scaled_index = round((i*8)/(args.number-1))
+        if scaled_index > 0 and scaled_index < 8:
+            desaturated_color = (color[0], color[1]*.30, color[2])
             desaturated_ramp.insert(0, desaturated_color)
     ramp.extend(desaturated_ramp)
 
