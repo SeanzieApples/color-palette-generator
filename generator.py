@@ -4,10 +4,15 @@ import sys
 import argparse
 import colorsys
 parser = argparse.ArgumentParser("generator")
-parser.add_argument("-c", "--hex", help="Hex Value", type=str, required=True)
-parser.add_argument("-o", "--output", help="Output file",
-                    type=str, required=True)
+parser.add_argument("-c", "--hex", help="Hex Value", type=str, default="#2db3b3")
+parser.add_argument("-o", "--output", help="Output file", type=str, default="file.png")
+parser.add_argument("-n", "--number", help="Number of colors per ramp", type=int, default=9)
 args = parser.parse_args()
+
+if args.number < 9:
+    args.number = 9
+
+ramp_num = round((8*args.number)/9)
 
 h = args.hex.lstrip('#')
 initial_color = tuple(int(h[i:i+2], 16)/255 for i in (0, 2, 4))
@@ -47,58 +52,73 @@ first_saturation = subtract_from_value(initial_hsv[1], 55, 100)
 first_brightness = subtract_from_value(initial_hsv[2], 55, 100)
 first_color = ((first_hue, first_saturation, first_brightness))
 
+
 all_colors = []
 all_colors.append(first_color)
 
+scaled_numbers = []
+
+for i in range(0, args.number-1):
+    scaled_num = round((i * 9)/args.number)
+    scaled_numbers.append(scaled_num)
+
 # Generate first ramp
-for i in range(0, 8):
+for scaled_num in scaled_numbers:
     last_hsb_values = all_colors[-1]
-    hue = add_to_value(last_hsb_values[0], 20, 360)
-    if(i <= 1):
-        saturation = add_to_value(last_hsb_values[1], 20, 100)
-        brightness = add_to_value(last_hsb_values[2], 15, 100)
-    elif(i == 2):
-        saturation = add_to_value(last_hsb_values[1], 10, 100)
-        brightness = add_to_value(last_hsb_values[2], 15, 100)
-    elif(i == 3):
-        saturation = add_to_value(last_hsb_values[1], 5, 100)
-        brightness = add_to_value(last_hsb_values[2], 10, 100)
-    elif(i <= 5):
-        saturation = subtract_from_value(last_hsb_values[1], 15, 100)
-        brightness = add_to_value(last_hsb_values[2], 10, 100)
-    elif(i < 9):
-        saturation = subtract_from_value(last_hsb_values[1], 15, 100)
-        brightness = add_to_value(last_hsb_values[2], 5, 100)
+    subtract_sat = False
+    count = scaled_numbers.count(scaled_num)
+    hue = add_to_value(last_hsb_values[0], 20/count, 360)
+    if(scaled_num <= 1):
+        saturation = 20
+        brightness = 15
+    elif(scaled_num == 2):
+        saturation = 10
+        brightness = 15
+    elif(scaled_num == 3):
+        saturation = 5
+        brightness = 10
+    elif(scaled_num <= 5):
+        subtract_sat = True
+        saturation = 15
+        brightness = 10
+    elif(scaled_num <= 9):
+        subtract_sat = True
+        saturation = 15
+        brightness = 5
+    if not subtract_sat:
+        saturation = add_to_value(last_hsb_values[1], saturation/count, 100)
+    else:
+        saturation = subtract_from_value(last_hsb_values[1], saturation/count, 100)
+    brightness = add_to_value(last_hsb_values[2], brightness/count, 100)
     all_colors.append((hue, saturation, brightness))
 
-hue_shift = 180
 first_ramp = []
 for i in all_colors:
-    shifted_color = (subtract_from_value(i[0], hue_shift, 360), i[1], i[2])
+    shifted_color = (subtract_from_value(i[0], (180*8)/ramp_num, 360), i[1], i[2])
     first_ramp.append(shifted_color)
 
 all_ramps = []
 all_ramps.append(first_ramp)
 
 # Generate other ramps
-for i in range(0, 7):
+for i in range(0, ramp_num-1):
     new_ramp = []
     desaturated_ramp = []
     for color in all_ramps[-1]:
-        new_color = (add_to_value(color[0], 45, 360), color[1], color[2])
+        new_color = (add_to_value(color[0], (45*9)/args.number, 360), color[1], color[2])
         new_ramp.append(new_color)
     all_ramps.append(new_ramp)
 
 for ramp in all_ramps:
     desaturated_ramp = []
     for color in ramp:
-        if ramp.index(color) > 0 and ramp.index(color) < 8:
+        if round((ramp.index(color)*9/args.number)) > 0 and round((ramp.index(color)*9)/args.number) < 8:
             desaturated_color = (color[0], (color[1]*70)/100, color[2])
             desaturated_ramp.insert(0, desaturated_color)
     ramp.extend(desaturated_ramp)
 
-color_width = 250
-color_height = 250
+color_width = round((250*9)/args.number)
+color_height = round((250*9)/args.number)
 pixels = []
 
 for j in all_ramps:
@@ -107,7 +127,9 @@ for j in all_ramps:
         for color in j:
             pixels[-1].extend(get_value_for_png(color) * color_width)
 
-png_writer = png.Writer(width=color_width * (len(all_colors) + (len(all_colors) - 2)),
+png_writer = png.Writer(width=color_width * (len(all_ramps[0])),
                         height=color_height * len(all_ramps), alpha='RGBA')
+
+
 with open(args.output, 'wb') as img:
     png_writer.write(img, pixels)
