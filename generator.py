@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.7
 import png
 import sys
 import argparse
@@ -103,7 +103,6 @@ all_ramps.append(first_ramp)
 # Generate other ramps
 for i in range(0, ramp_num-1):
     new_ramp = []
-    desaturated_ramp = []
     for color in all_ramps[-1]:
         new_color = (add_to_value(color[0], (45*9)/args.number, 360), color[1], color[2])
         new_ramp.append(new_color)
